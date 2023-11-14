@@ -1,0 +1,3 @@
+# enlève ce qui est dans le dossier report mais PAS le dossier lui-même
+report/*
+!report/.gitkeep
