@@ -24,8 +24,10 @@ def get_range():
     right_line = [rng for rng in zsh("ip a").read().splitlines() if "inet " in rng and "127.0.0.1" not in rng][0]
     range_ip = ipaddress.IPv4Network([l for l in right_line.split(' ') if '/' in l][0], strict=False)
     all_ips = [str(ip_addr) for ip_addr in list(range_ip.hosts())]
+
     return all_ips
 
+# toutes les mauvaises conditions, sinon ca envoie une liste de ports
 def get_port(ip, day):
     if not isfile(f"report/{day}/{ip}.xml"):
         return False
@@ -52,7 +54,6 @@ def get_port(ip, day):
 
     return portlst
 
-
 def main():
     today = date.today()
     command(f"mkdir -p report/{today}")
@@ -68,17 +69,17 @@ def main():
         if not isfile(f"report/{today}/{host}.xml"):
             tqdm.write(f"~~~  Scanning 65535 ports for {host}  ~~~")
 
-            command(f"nmap -p- -Pn -vv {host} -oX report/{today}/{host}.xml | grep -Fai 'done; ETC'")
+            command(f"sudo nmap -p- -Pn -vv {host} -oX report/{today}/{host}.xml | grep 'done;'")
 
         ports = get_port(host, today)
 
         if not ports:
             tqdm.write("Error: host either crashed/has no open port/is a printer")
+            continue
 
         tqdm.write(f"~~~  Launching script scan for {host}  ~~~")
 
         command(f"mkdir -p report/{today}/{host}")
-        ic(portlst)
-        command(f"nmap -p {ports} -vv -A {host} -oA report/{today}/{host}/nmap_results 2>&1 | grep -Fai 'done; ETC'")
+        command(f"nmap -p {ports} -Pn -vv -A {host} -oA report/{today}/{host}/nmap_results 2>&1 | grep 'done;'")
 
 main()
